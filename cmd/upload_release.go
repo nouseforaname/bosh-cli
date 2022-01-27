@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	semver "github.com/cppforlife/go-semi-semantic/version"
@@ -48,8 +50,6 @@ func NewUploadReleaseCmd(
 
 func (c UploadReleaseCmd) Run(opts UploadReleaseOpts) error {
 	switch {
-	case opts.Release != nil:
-		return c.uploadRelease(opts.Release, opts)
 	case opts.Args.URL.IsRemote():
 		return c.uploadIfNecessary(opts, c.uploadRemote)
 	case opts.Args.URL.IsGit():
@@ -95,23 +95,26 @@ func (c UploadReleaseCmd) uploadFile(opts UploadReleaseOpts) error {
 
 	var release boshrel.Release
 	var err error
-
-	path := opts.Args.URL.FilePath()
-
-	if len(path) > 0 {
-		release, err = releaseReader.Read(path)
-		if err != nil {
-			return err
-		}
+	fileInfo, _ := os.Stat(opts.Args.URL.FilePath())
+	if opts.Release != nil && fileInfo.IsDir() {
+		release = opts.Release
 	} else {
-		release, err = releaseDir.FindRelease(opts.Name, semver.Version(opts.Version))
-		if err != nil {
-			return err
+		path := opts.Args.URL.FilePath()
+
+		if len(path) > 0 {
+			release, err = releaseReader.Read(path)
+			if err != nil {
+				return err
+			}
+		} else {
+			release, err = releaseDir.FindRelease(opts.Name, semver.Version(opts.Version))
+			if err != nil {
+				return err
+			}
 		}
+
+		defer release.CleanUp()
 	}
-
-	defer release.CleanUp()
-
 	return c.uploadRelease(release, opts)
 }
 
