@@ -61,20 +61,23 @@ var (
 	)
 )
 
-func NewManifestFromPath(path string, fs boshsys.FileSystem) (Manifest, error) {
+func NewManifest(bytes []byte) (Manifest, error) {
 	var manifest Manifest
-
-	bytes, err := fs.ReadFile(path)
-	if err != nil {
-		return Manifest{}, bosherr.WrapErrorf(err, "Reading manifest '%s'", path)
-	}
-
 	str := invalidBinaryAnnotationReplacer.Replace(string(bytes))
 
-	err = yaml.Unmarshal([]byte(str), &manifest)
+	err := yaml.Unmarshal([]byte(str), &manifest)
 	if err != nil {
 		return Manifest{}, bosherr.WrapError(err, "Parsing release manifest")
 	}
 
 	return manifest, nil
+}
+
+func NewManifestFromPath(path string, fs boshsys.FileSystem) (Manifest, error) {
+	bytes, err := fs.ReadFile(path)
+	if err != nil {
+		return Manifest{}, bosherr.WrapErrorf(err, "Reading manifest '%s'", path)
+	}
+
+	return NewManifest(bytes)
 }

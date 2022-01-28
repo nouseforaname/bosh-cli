@@ -30,6 +30,9 @@ func NewArchiveReaderImpl(
 		fs:         fs,
 	}
 }
+func (r ArchiveReaderImpl) setExtract(value bool) {
+	r.extract = value
+}
 
 func (r ArchiveReaderImpl) Read(ref boshman.JobRef, path string) (*Job, error) {
 	job := NewJob(NewResourceWithBuiltArchive(ref.Name, ref.Fingerprint, path, ref.SHA1))

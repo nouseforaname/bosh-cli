@@ -26,7 +26,6 @@ func NewArchiveReaderImpl(
 		fs:         fs,
 	}
 }
-
 func (r ArchiveReaderImpl) Read(ref boshman.PackageRef, path string) (*Package, error) {
 	resource := NewResourceWithBuiltArchive(ref.Name, ref.Fingerprint, path, ref.SHA1)
 

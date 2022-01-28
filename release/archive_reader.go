@@ -1,6 +1,12 @@
 package release
 
 import (
+	"archive/tar"
+	"compress/gzip"
+	"io"
+	"io/ioutil"
+	"os"
+	"path"
 	"path/filepath"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
@@ -45,6 +51,30 @@ func NewArchiveReader(
 	}
 }
 
+func extractReleaseManifest(tarpath string) ([]byte, error) {
+	gzipStream, err := os.Open(tarpath)
+	if err != nil {
+		bosherr.Errorf("Failed to open new %s failed: %s", tarpath, err)
+	}
+	uncompressedStream, err := gzip.NewReader(gzipStream)
+	if err != nil {
+		bosherr.Errorf("Failed to create new TarReader failed: %s", err)
+	}
+	tarReader := tar.NewReader(uncompressedStream)
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, bosherr.Errorf("ExtractTarGz: Next() failed: %s", err.Error())
+		}
+		if path.Base(header.Name) == "release.MF" && header.Typeflag == tar.TypeReg {
+			return ioutil.ReadAll(tarReader)
+		}
+	}
+	return nil, bosherr.Errorf("Failed to find release.MF in release-tarball: %s", tarpath)
+}
 func (r ArchiveReader) Read(path string) (Release, error) {
 	extractPath, err := r.fs.TempDir("bosh-release")
 	if err != nil {
@@ -53,23 +83,24 @@ func (r ArchiveReader) Read(path string) (Release, error) {
 
 	r.logger.Info(r.logTag, "Extracting release tarball '%s' to '%s'", path, extractPath)
 
-	err = r.compressor.DecompressFileToDir(path, extractPath, boshcmd.CompressorOptions{})
+	manifestBytes, err := extractReleaseManifest(path)
+	// err = r.compressor.DecompressFileToDir(path, extractPath, boshcmd.CompressorOptions{})
+	// if err != nil {
+	// 	r.cleanUp(extractPath)
+	// 	return nil, bosherr.WrapError(err, "Extracting release")
+	// }
 	if err != nil {
-		r.cleanUp(extractPath)
-		return nil, bosherr.WrapError(err, "Extracting release")
+		return nil, err
 	}
-
-	manifestPath := filepath.Join(extractPath, "release.MF")
-
-	manifest, err := boshman.NewManifestFromPath(manifestPath, r.fs)
+	// manifestPath := filepath.Join(extractPath, "release.MF")
+	manifest, err := boshman.NewManifest(manifestBytes)
 	if err != nil {
-		r.cleanUp(extractPath)
 		return nil, err
 	}
 
 	release, err := r.newRelease(manifest, extractPath)
 	if err != nil {
-		r.cleanUp(extractPath)
+		// r.cleanUp(extractPath)
 		return nil, bosherr.WrapError(err, "Constructing release from manifest")
 	}
 

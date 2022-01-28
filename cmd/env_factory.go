@@ -99,7 +99,7 @@ func NewEnvFactory(
 
 		f.releaseFetcher = boshinst.NewReleaseFetcher(
 			tarballProvider,
-			releaseProvider.NewExtractingArchiveReader(),
+			releaseProvider.NewArchiveReader(),
 			f.releaseManager,
 		)
 
