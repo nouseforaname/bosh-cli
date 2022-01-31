@@ -154,9 +154,9 @@ func (mr *MockInstanceMockRecorder) UpdateJobs(arg0, arg1 interface{}) *gomock.C
 }
 
 // WaitUntilReady mocks base method
-func (m *MockInstance) WaitUntilReady(arg0 manifest0.Registry, arg1 ui.Stage) error {
+func (m *MockInstance) WaitUntilReady(arg1 ui.Stage) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WaitUntilReady", arg0, arg1)
+	ret := m.ctrl.Call(m, "WaitUntilReady", arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
