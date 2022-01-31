@@ -18,7 +18,6 @@ import (
 	bidisk "github.com/cloudfoundry/bosh-cli/deployment/disk"
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/deployment/manifest"
 	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
-	biinstallmanifest "github.com/cloudfoundry/bosh-cli/installation/manifest"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	biproperty "github.com/cloudfoundry/bosh-utils/property"
 
@@ -103,7 +102,6 @@ var _ = Describe("Manager", func() {
 			diskPool           bideplmanifest.DiskPool
 			deploymentManifest bideplmanifest.Manifest
 			fakeCloudStemcell  *fakebistemcell.FakeCloudStemcell
-			registry           biinstallmanifest.Registry
 
 			expectedInstance Instance
 			expectedDisk     *fakebidisk.FakeDisk
@@ -169,7 +167,6 @@ var _ = Describe("Manager", func() {
 			}
 
 			fakeCloudStemcell = fakebistemcell.NewFakeCloudStemcell("fake-stemcell-cid", "fake-stemcell-name", "fake-stemcell-version", apiVersion)
-			registry = biinstallmanifest.Registry{}
 
 			fakeVM = fakebivm.NewFakeVM("fake-vm-cid")
 			fakeVMManager.CreateVM = fakeVM
@@ -201,7 +198,6 @@ var _ = Describe("Manager", func() {
 				0,
 				deploymentManifest,
 				fakeCloudStemcell,
-				registry,
 				fakeStage,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -219,7 +215,6 @@ var _ = Describe("Manager", func() {
 				0,
 				deploymentManifest,
 				fakeCloudStemcell,
-				registry,
 				fakeStage,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -233,7 +228,6 @@ var _ = Describe("Manager", func() {
 				0,
 				deploymentManifest,
 				fakeCloudStemcell,
-				registry,
 				fakeStage,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -250,7 +244,6 @@ var _ = Describe("Manager", func() {
 				0,
 				deploymentManifest,
 				fakeCloudStemcell,
-				registry,
 				fakeStage,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -273,7 +266,6 @@ var _ = Describe("Manager", func() {
 				0,
 				deploymentManifest,
 				fakeCloudStemcell,
-				registry,
 				fakeStage,
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -287,22 +279,7 @@ var _ = Describe("Manager", func() {
 			}))
 		})
 
-		Context("when registry or sshTunnelConfig are not empty", func() {
-			BeforeEach(func() {
-				registry = biinstallmanifest.Registry{
-					Username: "fake-registry-username",
-					Password: "fake-registry-password",
-					Host:     "fake-registry-host",
-					Port:     124,
-					SSHTunnel: biinstallmanifest.SSHTunnel{
-						User:       "fake-ssh-user",
-						Host:       "fake-ssh-host",
-						Port:       123,
-						Password:   "fake-ssh-password",
-						PrivateKey: "---BEGIN PRIVATE KEY--- im a real key ---END PRIVATE KEY---",
-					},
-				}
-			})
+		Context("sshTunnelConfig is not empty", func() {
 
 			It("starts & stops the ssh tunnel", func() {
 				_, _, err := manager.Create(
@@ -310,7 +287,6 @@ var _ = Describe("Manager", func() {
 					0,
 					deploymentManifest,
 					fakeCloudStemcell,
-					registry,
 					fakeStage,
 				)
 				Expect(err).NotTo(HaveOccurred())
@@ -337,7 +313,6 @@ var _ = Describe("Manager", func() {
 						0,
 						deploymentManifest,
 						fakeCloudStemcell,
-						registry,
 						fakeStage,
 					)
 					Expect(err).To(HaveOccurred())
@@ -353,7 +328,6 @@ var _ = Describe("Manager", func() {
 					0,
 					deploymentManifest,
 					fakeCloudStemcell,
-					registry,
 					fakeStage,
 				)
 				Expect(err).NotTo(HaveOccurred())
@@ -372,7 +346,6 @@ var _ = Describe("Manager", func() {
 					0,
 					deploymentManifest,
 					fakeCloudStemcell,
-					registry,
 					fakeStage,
 				)
 				Expect(err).To(HaveOccurred())
@@ -385,7 +358,6 @@ var _ = Describe("Manager", func() {
 					0,
 					deploymentManifest,
 					fakeCloudStemcell,
-					registry,
 					fakeStage,
 				)
 				Expect(err).To(HaveOccurred())

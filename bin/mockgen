@@ -17,7 +17,6 @@ srcFiles=(
   deployment/disk/Disk,Manager
   deployment/vm/ManagerFactory
   deployment/release/JobResolver
-  registry/Server,ServerManager
   release/Manager,Extractor
   state/job/DependencyCompiler
   state/pkg/Compiler,CompiledPackageRepo
@@ -36,10 +35,11 @@ for srcFile in ${srcFiles[*]}; do
   destFile=$srcDir/mocks/mocks.go
 
   mkdir -p $srcDir/mocks
-  echo mockgen -package mocks -destination $destFile $rootPackage/$package $class
+  echo mockgen -package mocks -destination $destFile $rootPackage/$package $class  --build_flags=--mod=vendor
   mockgen -package mocks -destination $destFile $rootPackage/$package $class
-  sed -i "" -e "s%github.com/cloudfoundry/bosh-cli/vendor/%%" $destFile
-  $bin/go fmt $destFile
+  set -x
+  sed -i "$destFile" -e "s%github.com/cloudfoundry/bosh-cli/vendor/%%"
+  go fmt $destFil
 done
 
 

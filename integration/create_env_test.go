@@ -43,7 +43,6 @@ import (
 	biinstallmanifest "github.com/cloudfoundry/bosh-cli/installation/manifest"
 	mock_install "github.com/cloudfoundry/bosh-cli/installation/mocks"
 	bitarball "github.com/cloudfoundry/bosh-cli/installation/tarball"
-	biregistry "github.com/cloudfoundry/bosh-cli/registry"
 	birel "github.com/cloudfoundry/bosh-cli/release"
 	boshrel "github.com/cloudfoundry/bosh-cli/release"
 	bireljob "github.com/cloudfoundry/bosh-cli/release/job"
@@ -74,8 +73,7 @@ var _ = Describe("bosh", func() {
 			fs     *fakesys.FakeFileSystem
 			logger boshlog.Logger
 
-			registryServerManager biregistry.ServerManager
-			releaseManager        birel.Manager
+			releaseManager birel.Manager
 
 			mockInstaller          *mock_install.MockInstaller
 			mockInstallerFactory   *mock_install.MockInstallerFactory
@@ -310,7 +308,7 @@ cloud_provider:
 			installedJob.Name = "fake-cpi-release-job-name"
 			installedJob.Path = filepath.Join(target.JobsPath(), "fake-cpi-release-job-name")
 
-			installation := biinstall.NewInstallation(target, installedJob, installationManifest, registryServerManager)
+			installation := biinstall.NewInstallation(target, installedJob, installationManifest)
 
 			mockInstallerFactory.EXPECT().NewInstaller(target).Return(mockInstaller).AnyTimes()
 
@@ -791,8 +789,6 @@ cloud_provider:
 			fakeRepoUUIDGenerator = fakeuuid.NewFakeGenerator()
 
 			mockCloud = mock_cloud.NewMockCloud(mockCtrl)
-
-			registryServerManager = biregistry.NewServerManager(logger)
 
 			releaseReader = &fakerel.FakeReader{}
 			releaseManager = biinstall.NewReleaseManager(logger)
