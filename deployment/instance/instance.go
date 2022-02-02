@@ -8,7 +8,6 @@ import (
 	bidisk "github.com/cloudfoundry/bosh-cli/deployment/disk"
 	biinstancestate "github.com/cloudfoundry/bosh-cli/deployment/instance/state"
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/deployment/manifest"
-	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
 	bivm "github.com/cloudfoundry/bosh-cli/deployment/vm"
 	biui "github.com/cloudfoundry/bosh-cli/ui"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
@@ -43,14 +42,13 @@ type Instance interface {
 }
 
 type instance struct {
-	jobName          string
-	id               int
-	vm               bivm.VM
-	vmManager        bivm.Manager
-	sshTunnelFactory bisshtunnel.Factory
-	stateBuilder     biinstancestate.Builder
-	logger           boshlog.Logger
-	logTag           string
+	jobName      string
+	id           int
+	vm           bivm.VM
+	vmManager    bivm.Manager
+	stateBuilder biinstancestate.Builder
+	logger       boshlog.Logger
+	logTag       string
 }
 
 func NewInstance(
@@ -58,19 +56,17 @@ func NewInstance(
 	id int,
 	vm bivm.VM,
 	vmManager bivm.Manager,
-	sshTunnelFactory bisshtunnel.Factory,
 	stateBuilder biinstancestate.Builder,
 	logger boshlog.Logger,
 ) Instance {
 	return &instance{
-		jobName:          jobName,
-		id:               id,
-		vm:               vm,
-		vmManager:        vmManager,
-		sshTunnelFactory: sshTunnelFactory,
-		stateBuilder:     stateBuilder,
-		logger:           logger,
-		logTag:           "instance",
+		jobName:      jobName,
+		id:           id,
+		vm:           vm,
+		vmManager:    vmManager,
+		stateBuilder: stateBuilder,
+		logger:       logger,
+		logTag:       "instance",
 	}
 }
 
@@ -95,7 +91,6 @@ func (i *instance) WaitUntilReady(
 ) error {
 	stepName := fmt.Sprintf("Waiting for the agent on VM '%s' to be ready", i.vm.CID())
 	err := stage.Perform(stepName, func() error {
-
 		return i.vm.WaitUntilReady(10*time.Minute, 500*time.Millisecond)
 	})
 

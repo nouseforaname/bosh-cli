@@ -3,7 +3,6 @@ package fakes
 import (
 	bicloud "github.com/cloudfoundry/bosh-cli/cloud"
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/deployment/manifest"
-	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
 	bivm "github.com/cloudfoundry/bosh-cli/deployment/vm"
 	bistemcell "github.com/cloudfoundry/bosh-cli/stemcell"
 	biui "github.com/cloudfoundry/bosh-cli/ui"
@@ -27,7 +26,6 @@ type VMDeployInput struct {
 
 type WaitUntilReadyInput struct {
 	VM               bivm.VM
-	SSHTunnelOptions bisshtunnel.Options
 	EventLoggerStage biui.Stage
 }
 
@@ -65,10 +63,9 @@ func (m *FakeVMDeployer) Deploy(
 	return output.vm, output.err
 }
 
-func (m *FakeVMDeployer) WaitUntilReady(vm bivm.VM, sshTunnelOptions bisshtunnel.Options, eventLoggerStage biui.Stage) error {
+func (m *FakeVMDeployer) WaitUntilReady(vm bivm.VM, eventLoggerStage biui.Stage) error {
 	input := WaitUntilReadyInput{
 		VM:               vm,
-		SSHTunnelOptions: sshTunnelOptions,
 		EventLoggerStage: eventLoggerStage,
 	}
 	m.WaitUntilReadyInputs = append(m.WaitUntilReadyInputs, input)

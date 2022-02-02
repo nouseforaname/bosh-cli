@@ -12,7 +12,6 @@ import (
 	"github.com/cppforlife/go-patch/patch"
 	"gopkg.in/yaml.v2"
 
-	biutil "github.com/cloudfoundry/bosh-cli/common/util"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 	birelsetmanifest "github.com/cloudfoundry/bosh-cli/release/set/manifest"
 )
@@ -37,13 +36,8 @@ type manifest struct {
 type installation struct {
 	Template   template
 	Properties map[interface{}]interface{}
-	SSHTunnel  SSHTunnel `yaml:"ssh_tunnel"`
 	Mbus       string
 	Cert       Certificate
-}
-
-func (i installation) HasSSHTunnel() bool {
-	return i.SSHTunnel != SSHTunnel{}
 }
 
 type template struct {
@@ -82,27 +76,6 @@ func (p *parser) Parse(path string, vars boshtpl.Variables, op patch.Op, release
 	}
 
 	p.logger.Debug(p.logTag, "Parsed installation manifest: %#v", comboManifest)
-
-	if comboManifest.CloudProvider.SSHTunnel.PrivateKey != "" {
-		if p.lookForPrivateSshHeader(comboManifest.CloudProvider.SSHTunnel.PrivateKey) {
-			pkey, _ := pem.Decode([]byte(comboManifest.CloudProvider.SSHTunnel.PrivateKey))
-			if pkey == nil {
-				return Manifest{}, bosherr.Error("Invalid private key for ssh tunnel")
-			}
-		} else if strings.HasPrefix(comboManifest.CloudProvider.SSHTunnel.PrivateKey, "----") {
-			return Manifest{}, bosherr.Error("Unsupported private key format for ssh tunnel")
-		} else {
-			absolutePath, err := biutil.AbsolutifyPath(path, comboManifest.CloudProvider.SSHTunnel.PrivateKey, p.fs)
-			if err != nil {
-				return Manifest{}, bosherr.WrapErrorf(err, "Expanding private_key path")
-			}
-			keyContents, err := p.fs.ReadFile(absolutePath)
-			if err != nil {
-				return Manifest{}, bosherr.WrapErrorf(err, "Reading private key from %s", absolutePath)
-			}
-			comboManifest.CloudProvider.SSHTunnel.PrivateKey = string(keyContents)
-		}
-	}
 
 	if comboManifest.CloudProvider.Cert.CA != "" {
 		pkey, _ := pem.Decode([]byte(comboManifest.CloudProvider.Cert.CA))

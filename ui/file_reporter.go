@@ -64,6 +64,5 @@ func (p *ReadCloserProxy) Read(bs []byte) (int, error) {
 func (p *ReadCloserProxy) Close() error {
 	err := p.reader.Close()
 	p.bar.Finish()
-	//p.ui.BeginLinef("\n")
 	return err
 }

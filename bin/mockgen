@@ -6,12 +6,12 @@ bin=$(dirname $0)
 rootPackage=github.com/cloudfoundry/bosh-cli
 
 srcFiles=(
-# config/LegacyDeploymentStateMigrator
-# cloud/Cloud,Factory
-# cmd/DeploymentDeleter,DeploymentStateManager
-# installation/Installation,Installer,InstallerFactory,Uninstaller,JobResolver,PackageCompiler,JobRenderer
-# installation/tarball/Provider
-# deployment/Deployment,Factory,Deployer,Manager,ManagerFactory
+  config/LegacyDeploymentStateMigrator
+  cloud/Cloud,Factory
+  cmd/DeploymentDeleter,DeploymentStateManager
+  installation/Installation,Installer,InstallerFactory,Uninstaller,JobResolver,PackageCompiler,JobRenderer
+  installation/tarball/Provider
+  deployment/Deployment,Factory,Deployer,Manager,ManagerFactory
   deployment/instance/Instance,Manager
   deployment/instance/state/BuilderFactory,Builder,State
   deployment/disk/Disk,Manager
@@ -35,9 +35,8 @@ for srcFile in ${srcFiles[*]}; do
   destFile=$srcDir/mocks/mocks.go
 
   mkdir -p $srcDir/mocks
-  echo mockgen -package mocks -destination $destFile $rootPackage/$package $class  --build_flags=--mod=vendor
+  echo mockgen -package mocks -destination $destFile $rootPackage/$package $class 
   mockgen -package mocks -destination $destFile $rootPackage/$package $class
-  set -x
   sed -i "$destFile" -e "s%github.com/cloudfoundry/bosh-cli/vendor/%%"
   go fmt $destFil
 done

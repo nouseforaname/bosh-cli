@@ -1,7 +1,6 @@
 package deployment_test
 
 import (
-	"errors"
 	"time"
 
 	. "github.com/cloudfoundry/bosh-cli/deployment"
@@ -19,7 +18,6 @@ import (
 	biconfig "github.com/cloudfoundry/bosh-cli/config"
 	biinstance "github.com/cloudfoundry/bosh-cli/deployment/instance"
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/deployment/manifest"
-	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
 	bistemcell "github.com/cloudfoundry/bosh-cli/stemcell"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
@@ -28,7 +26,6 @@ import (
 	"github.com/cloudfoundry/bosh-agent/agentclient"
 	fakebicloud "github.com/cloudfoundry/bosh-cli/cloud/fakes"
 	fakebiconfig "github.com/cloudfoundry/bosh-cli/config/fakes"
-	fakebisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel/fakes"
 	fakebivm "github.com/cloudfoundry/bosh-cli/deployment/vm/fakes"
 	fakebiui "github.com/cloudfoundry/bosh-cli/ui/fakes"
 )
@@ -50,8 +47,6 @@ var _ = Describe("Deployer", func() {
 		fakeVMManager          *fakebivm.FakeManager
 		mockAgentClient        *mock_agentclient.MockAgentClient
 		mockAgentClientFactory *mock_httpagent.MockAgentClientFactory
-		fakeSSHTunnelFactory   *fakebisshtunnel.FakeFactory
-		fakeSSHTunnel          *fakebisshtunnel.FakeTunnel
 		cloud                  *fakebicloud.FakeCloud
 		deploymentManifest     bideplmanifest.Manifest
 		diskPool               bideplmanifest.DiskPool
@@ -108,11 +103,6 @@ var _ = Describe("Deployer", func() {
 		fakeVMManager = fakebivm.NewFakeManager()
 		mockVMManagerFactory.EXPECT().NewManager(cloud, mockAgentClient).Return(fakeVMManager).AnyTimes()
 
-		fakeSSHTunnelFactory = fakebisshtunnel.NewFakeFactory()
-		fakeSSHTunnel = fakebisshtunnel.NewFakeTunnel()
-		fakeSSHTunnelFactory.SSHTunnel = fakeSSHTunnel
-		fakeSSHTunnel.SetStartBehavior(nil, nil)
-
 		fakeVM = fakebivm.NewFakeVM("fake-vm-cid")
 		fakeVMManager.CreateVM = fakeVM
 
@@ -138,7 +128,7 @@ var _ = Describe("Deployer", func() {
 		mockState = mock_instance_state.NewMockState(mockCtrl)
 
 		instanceFactory := biinstance.NewFactory(mockStateBuilderFactory)
-		instanceManagerFactory := biinstance.NewManagerFactory(fakeSSHTunnelFactory, instanceFactory, logger)
+		instanceManagerFactory := biinstance.NewManagerFactory(instanceFactory, logger)
 
 		mockBlobstore = mock_blobstore.NewMockBlobstore(mockCtrl)
 
@@ -224,36 +214,6 @@ var _ = Describe("Deployer", func() {
 			Stemcell: cloudStemcell,
 			Manifest: deploymentManifest,
 		}))
-	})
-
-	Context("ssh tunnel configs are not empty", func() {
-
-		It("starts the SSH tunnel", func() {
-			_, err := deployer.Deploy(cloud, deploymentManifest, cloudStemcell, fakeVMManager, mockBlobstore, skipDrain, fakeStage)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(fakeSSHTunnel.Started).To(BeTrue())
-			Expect(fakeSSHTunnelFactory.NewSSHTunnelOptions).To(Equal(bisshtunnel.Options{
-				User:              "fake-ssh-username",
-				PrivateKey:        "---BEGIN PRIVATE KEY--- huzzah! ---END PRIVATE KEY---",
-				Password:          "fake-password",
-				Host:              "fake-ssh-host",
-				Port:              124,
-				LocalForwardPort:  123,
-				RemoteForwardPort: 123,
-			}))
-		})
-
-		Context("when starting SSH tunnel fails", func() {
-			BeforeEach(func() {
-				fakeSSHTunnel.SetStartBehavior(errors.New("fake-ssh-tunnel-start-error"), nil)
-			})
-
-			It("returns an error", func() {
-				_, err := deployer.Deploy(cloud, deploymentManifest, cloudStemcell, fakeVMManager, mockBlobstore, skipDrain, fakeStage)
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("fake-ssh-tunnel-start-error"))
-			})
-		})
 	})
 
 	It("waits for the vm", func() {

@@ -18,7 +18,6 @@ import (
 	biinstancestate "github.com/cloudfoundry/bosh-cli/deployment/instance/state"
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/deployment/manifest"
 	bideplrel "github.com/cloudfoundry/bosh-cli/deployment/release"
-	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
 	bidepltpl "github.com/cloudfoundry/bosh-cli/deployment/template"
 	bivm "github.com/cloudfoundry/bosh-cli/deployment/vm"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
@@ -165,11 +164,10 @@ func NewEnvFactory(
 			deps.Logger,
 		)
 
-		sshTunnelFactory := bisshtunnel.NewFactory(deps.Logger)
 		instanceFactory := biinstance.NewFactory(builderFactory)
 
 		f.instanceManagerFactory = biinstance.NewManagerFactory(
-			sshTunnelFactory, instanceFactory, deps.Logger)
+			instanceFactory, deps.Logger)
 	}
 
 	{

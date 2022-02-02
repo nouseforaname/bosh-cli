@@ -15,13 +15,11 @@ import (
 	bicloud "github.com/cloudfoundry/bosh-cli/cloud"
 	bidisk "github.com/cloudfoundry/bosh-cli/deployment/disk"
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/deployment/manifest"
-	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 
 	"github.com/cloudfoundry/bosh-agent/agentclient"
 	fakebidisk "github.com/cloudfoundry/bosh-cli/deployment/disk/fakes"
-	fakebisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel/fakes"
 	fakebivm "github.com/cloudfoundry/bosh-cli/deployment/vm/fakes"
 	fakebiui "github.com/cloudfoundry/bosh-cli/ui/fakes"
 )
@@ -42,12 +40,10 @@ var _ = Describe("Instance", func() {
 		mockStateBuilder *mock_instance_state.MockBuilder
 		mockState        *mock_instance_state.MockState
 
-		fakeVMManager        *fakebivm.FakeManager
-		fakeVM               *fakebivm.FakeVM
-		fakeSSHTunnelFactory *fakebisshtunnel.FakeFactory
-		fakeSSHTunnel        *fakebisshtunnel.FakeTunnel
-		fakeStage            *fakebiui.FakeStage
-		logger               *loggerfakes.FakeLogger
+		fakeVMManager *fakebivm.FakeManager
+		fakeVM        *fakebivm.FakeVM
+		fakeStage     *fakebiui.FakeStage
+		logger        *loggerfakes.FakeLogger
 
 		instance Instance
 
@@ -64,11 +60,6 @@ var _ = Describe("Instance", func() {
 		fakeVMManager = fakebivm.NewFakeManager()
 		fakeVM = fakebivm.NewFakeVM("fake-vm-cid")
 
-		fakeSSHTunnelFactory = fakebisshtunnel.NewFakeFactory()
-		fakeSSHTunnel = fakebisshtunnel.NewFakeTunnel()
-		fakeSSHTunnel.SetStartBehavior(nil, nil)
-		fakeSSHTunnelFactory.SSHTunnel = fakeSSHTunnel
-
 		mockStateBuilder = mock_instance_state.NewMockBuilder(mockCtrl)
 		mockState = mock_instance_state.NewMockState(mockCtrl)
 
@@ -81,7 +72,6 @@ var _ = Describe("Instance", func() {
 			jobIndex,
 			fakeVM,
 			fakeVMManager,
-			fakeSSHTunnelFactory,
 			mockStateBuilder,
 			logger,
 		)
@@ -482,21 +472,6 @@ var _ = Describe("Instance", func() {
 
 		Context("When raw private key is provided", func() {
 
-			It("starts & stops the SSH tunnel", func() {
-				err := instance.WaitUntilReady(fakeStage)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(fakeSSHTunnelFactory.NewSSHTunnelOptions).To(Equal(bisshtunnel.Options{
-					User:              "fake-ssh-username",
-					PrivateKey:        "--BEGIN PRIVATE KEY-- asdf --END PRIVATE KEY--",
-					Password:          "fake-password",
-					Host:              "fake-ssh-host",
-					Port:              124,
-					LocalForwardPort:  125,
-					RemoteForwardPort: 125,
-				}))
-				Expect(fakeSSHTunnel.Started).To(BeTrue())
-			})
-
 			It("waits for the vm", func() {
 				err := instance.WaitUntilReady(fakeStage)
 				Expect(err).NotTo(HaveOccurred())
@@ -513,18 +488,6 @@ var _ = Describe("Instance", func() {
 				Expect(fakeStage.PerformCalls).To(Equal([]*fakebiui.PerformCall{
 					{Name: "Waiting for the agent on VM 'fake-vm-cid' to be ready"},
 				}))
-			})
-
-			Context("when starting SSH tunnel fails", func() {
-				BeforeEach(func() {
-					fakeSSHTunnel.SetStartBehavior(bosherr.Error("fake-ssh-tunnel-start-error"), nil)
-				})
-
-				It("returns an error", func() {
-					err := instance.WaitUntilReady(fakeStage)
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("fake-ssh-tunnel-start-error"))
-				})
 			})
 
 			Context("when waiting for the agent fails", func() {
@@ -549,40 +512,8 @@ var _ = Describe("Instance", func() {
 				})
 			})
 
-			Context("when receiving SSH tunnel errors", func() {
-				BeforeEach(func() {
-					fakeSSHTunnel.SetStartBehavior(nil, bosherr.Error("fake-ssh-tunnel-error"))
-				})
-
-				It("logs the error", func() {
-					err := instance.WaitUntilReady(fakeStage)
-					Expect(err).NotTo(HaveOccurred())
-
-					Eventually(logger.WarnCallCount).Should(Equal(1))
-					tag, message, _ := logger.WarnArgsForCall(0)
-					Expect(tag).To(Equal("instance"))
-					Expect(message).To(Equal("Received SSH tunnel error: %s"))
-				})
-			})
 		})
 
-		Context("When the private key is provided", func() {
-
-			It("sets the SSHTunnel options", func() {
-				err := instance.WaitUntilReady(fakeStage)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(fakeSSHTunnelFactory.NewSSHTunnelOptions).To(Equal(bisshtunnel.Options{
-					User:              "fake-ssh-username",
-					PrivateKey:        "--BEGIN PRIVATE KEY-- asdf --END PRIVATE KEY--",
-					Password:          "fake-password",
-					Host:              "fake-ssh-host",
-					Port:              124,
-					LocalForwardPort:  125,
-					RemoteForwardPort: 125,
-				}))
-			})
-
-		})
 	})
 
 	Describe("Stop", func() {

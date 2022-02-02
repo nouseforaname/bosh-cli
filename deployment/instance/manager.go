@@ -8,7 +8,6 @@ import (
 	bicloud "github.com/cloudfoundry/bosh-cli/cloud"
 	bidisk "github.com/cloudfoundry/bosh-cli/deployment/disk"
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/deployment/manifest"
-	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
 	bivm "github.com/cloudfoundry/bosh-cli/deployment/vm"
 	bistemcell "github.com/cloudfoundry/bosh-cli/stemcell"
 	biui "github.com/cloudfoundry/bosh-cli/ui"
@@ -34,31 +33,28 @@ type Manager interface {
 }
 
 type manager struct {
-	cloud            bicloud.Cloud
-	vmManager        bivm.Manager
-	blobstore        biblobstore.Blobstore
-	sshTunnelFactory bisshtunnel.Factory
-	instanceFactory  Factory
-	logger           boshlog.Logger
-	logTag           string
+	cloud           bicloud.Cloud
+	vmManager       bivm.Manager
+	blobstore       biblobstore.Blobstore
+	instanceFactory Factory
+	logger          boshlog.Logger
+	logTag          string
 }
 
 func NewManager(
 	cloud bicloud.Cloud,
 	vmManager bivm.Manager,
 	blobstore biblobstore.Blobstore,
-	sshTunnelFactory bisshtunnel.Factory,
 	instanceFactory Factory,
 	logger boshlog.Logger,
 ) Manager {
 	return &manager{
-		cloud:            cloud,
-		vmManager:        vmManager,
-		blobstore:        blobstore,
-		sshTunnelFactory: sshTunnelFactory,
-		instanceFactory:  instanceFactory,
-		logger:           logger,
-		logTag:           "vmDeployer",
+		cloud:           cloud,
+		vmManager:       vmManager,
+		blobstore:       blobstore,
+		instanceFactory: instanceFactory,
+		logger:          logger,
+		logTag:          "vmDeployer",
 	}
 }
 
@@ -81,7 +77,6 @@ func (m *manager) FindCurrent() ([]Instance, error) {
 			instanceID,
 			vm,
 			m.vmManager,
-			m.sshTunnelFactory,
 			m.blobstore,
 			m.logger,
 		)
@@ -117,7 +112,7 @@ func (m *manager) Create(
 		return nil, []bidisk.Disk{}, err
 	}
 
-	instance := m.instanceFactory.NewInstance(jobName, id, vm, m.vmManager, m.sshTunnelFactory, m.blobstore, m.logger)
+	instance := m.instanceFactory.NewInstance(jobName, id, vm, m.vmManager, m.blobstore, m.logger)
 
 	if err := instance.WaitUntilReady(eventLoggerStage); err != nil {
 		return instance, []bidisk.Disk{}, bosherr.WrapError(err, "Waiting until instance is ready")

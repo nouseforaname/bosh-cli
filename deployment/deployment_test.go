@@ -21,7 +21,6 @@ import (
 	biconfig "github.com/cloudfoundry/bosh-cli/config"
 	bidisk "github.com/cloudfoundry/bosh-cli/deployment/disk"
 	biinstance "github.com/cloudfoundry/bosh-cli/deployment/instance"
-	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
 	bivm "github.com/cloudfoundry/bosh-cli/deployment/vm"
 	bistemcell "github.com/cloudfoundry/bosh-cli/stemcell"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
@@ -123,14 +122,13 @@ var _ = Describe("Deployment", func() {
 		diskDeployer := bivm.NewDiskDeployer(diskManagerFactory, diskRepo, logger, false)
 
 		vmManagerFactory := bivm.NewManagerFactory(vmRepo, stemcellRepo, diskDeployer, fakeUUIDGenerator, fs, logger)
-		sshTunnelFactory := bisshtunnel.NewFactory(logger)
 
 		mockStateBuilderFactory = mock_instance_state.NewMockBuilderFactory(mockCtrl)
 		mockStateBuilder = mock_instance_state.NewMockBuilder(mockCtrl)
 		mockState = mock_instance_state.NewMockState(mockCtrl)
 
 		instanceFactory := biinstance.NewFactory(mockStateBuilderFactory)
-		instanceManagerFactory := biinstance.NewManagerFactory(sshTunnelFactory, instanceFactory, logger)
+		instanceManagerFactory := biinstance.NewManagerFactory(instanceFactory, logger)
 		stemcellManagerFactory := bistemcell.NewManagerFactory(stemcellRepo)
 
 		mockBlobstore = mock_blobstore.NewMockBlobstore(mockCtrl)

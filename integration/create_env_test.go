@@ -35,7 +35,6 @@ import (
 	biinstance "github.com/cloudfoundry/bosh-cli/deployment/instance"
 	mock_instance_state "github.com/cloudfoundry/bosh-cli/deployment/instance/state/mocks"
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/deployment/manifest"
-	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
 	bidepltpl "github.com/cloudfoundry/bosh-cli/deployment/template"
 	bivm "github.com/cloudfoundry/bosh-cli/deployment/vm"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
@@ -103,8 +102,6 @@ var _ = Describe("bosh", func() {
 			stemcellRepo                  biconfig.StemcellRepo
 			deploymentRepo                biconfig.DeploymentRepo
 			releaseRepo                   biconfig.ReleaseRepo
-
-			sshTunnelFactory bisshtunnel.Factory
 
 			diskManagerFactory bidisk.ManagerFactory
 			diskDeployer       bivm.DiskDeployer
@@ -223,9 +220,7 @@ cloud_provider:
       -----END CERTIFICATE-----
 `
 		type manifestContext struct {
-			DiskSize            int
-			SSHTunnelUser       string
-			SSHTunnelPrivateKey string
+			DiskSize int
 		}
 
 		var updateManifest = func(context manifestContext) {
@@ -391,7 +386,7 @@ cloud_provider:
 			deploymentValidator := bideplmanifest.NewValidator(logger)
 
 			instanceFactory := biinstance.NewFactory(mockStateBuilderFactory)
-			instanceManagerFactory := biinstance.NewManagerFactory(sshTunnelFactory, instanceFactory, logger)
+			instanceManagerFactory := biinstance.NewManagerFactory(instanceFactory, logger)
 
 			pingTimeout := 1 * time.Second
 			pingDelay := 100 * time.Millisecond
@@ -783,8 +778,6 @@ cloud_provider:
 			mockInstaller = mock_install.NewMockInstaller(mockCtrl)
 			mockInstallerFactory = mock_install.NewMockInstallerFactory(mockCtrl)
 			mockCloudFactory = mock_cloud.NewMockFactory(mockCtrl)
-
-			sshTunnelFactory = bisshtunnel.NewFactory(logger)
 
 			fakeRepoUUIDGenerator = fakeuuid.NewFakeGenerator()
 

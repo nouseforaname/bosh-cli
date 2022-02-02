@@ -3,7 +3,6 @@ package instance
 import (
 	biblobstore "github.com/cloudfoundry/bosh-cli/blobstore"
 	biinstancestate "github.com/cloudfoundry/bosh-cli/deployment/instance/state"
-	bisshtunnel "github.com/cloudfoundry/bosh-cli/deployment/sshtunnel"
 	bivm "github.com/cloudfoundry/bosh-cli/deployment/vm"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
@@ -14,7 +13,6 @@ type Factory interface {
 		id int,
 		vm bivm.VM,
 		vmManager bivm.Manager,
-		sshTunnelFactory bisshtunnel.Factory,
 		blobstore biblobstore.Blobstore,
 		logger boshlog.Logger,
 	) Instance
@@ -37,7 +35,6 @@ func (f *factory) NewInstance(
 	id int,
 	vm bivm.VM,
 	vmManager bivm.Manager,
-	sshTunnelFactory bisshtunnel.Factory,
 	blobstore biblobstore.Blobstore,
 	logger boshlog.Logger,
 ) Instance {
@@ -48,7 +45,6 @@ func (f *factory) NewInstance(
 		id,
 		vm,
 		vmManager,
-		sshTunnelFactory,
 		stateBuilder,
 		logger,
 	)
